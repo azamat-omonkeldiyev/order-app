@@ -7,6 +7,8 @@ import { MailService } from './mail/mail.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { MulterController } from './multer/multer.controller';
+import { OrderModule } from './order/order.module';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [UserModule,MongooseModule.forRoot('mongodb://localhost/nest-order'),
@@ -14,6 +16,8 @@ import { MulterController } from './multer/multer.controller';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/file',
     }),
+    OrderModule,
+    ProductsModule,
   ],
   controllers: [AppController,MulterController],
   providers: [AppService,MailService,

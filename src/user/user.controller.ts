@@ -36,8 +36,8 @@ export class UserController {
   }
 
   @Post('login')
-  login(@Body() data: LoginUserDto) {
-    return this.userService.login(data);
+  login(@Body() data: LoginUserDto,@Req() request: Request) {
+    return this.userService.login(data,request);
   }
 
 
@@ -47,8 +47,8 @@ export class UserController {
   @Get('/me')
   me(@Req() req) {
     const userId = req['user-id'];
-    console.log(req['user-role'])
-    console.log('salom')
+    // console.log(req['user-role'])
+    // console.log('salom')
     return this.userService.me(userId);
   }
 

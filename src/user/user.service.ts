@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Req, UnauthorizedException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -9,6 +9,7 @@ import * as bcrypt from "bcrypt"
 import { LoginUserDto } from './dto/login-user.dto';
 import { MailService } from 'src/mail/mail.service';
 import { verifyOtpDto } from './dto/verify-otp.dto';
+import * as UAParser from 'ua-parser-js';
 
 @Injectable()
 export class UserService {
@@ -20,7 +21,7 @@ export class UserService {
 
   async findUser(name: string) {
     try {
-      let user = await this.User.findOne({ name });
+      let user = await this.User.findOne({ username:name });
       return user;
     } catch (error) {
       return error;
@@ -38,14 +39,12 @@ export class UserService {
 
   async register(data: CreateUserDto) {
     let user = await this.findUser(data.username);
-    console.log(user);
     if (user) {
       throw new BadRequestException('username exists');
     }
     
     let email = await this.findEmail(data.email);
-    console.log(email);
-    if (user) {
+    if (email) {
       throw new BadRequestException('email exists');
     }
     
@@ -56,9 +55,9 @@ export class UserService {
         ...data,
         password: hash,
       });
-      console.log("salom")
+      // console.log("salom")
       let otp = this.mail.createOtp(data.email);
-      console.log(otp)
+      // console.log(otp)
       await this.mail.sendEmail(data.email,"ONE-TIME PASSWORD", `<h4>Your login password is <h3><u>${otp}</u></h3> The validity period is 2 minutes.</h4>`)
       return newUser;
     } catch (error) {
@@ -71,7 +70,7 @@ export class UserService {
     return {result: match};
   }
 
-  async login(data: LoginUserDto) {
+  async login(data: LoginUserDto,request: Request) {
     try {
       let user = await this.findEmail(data.email);
       if (!user) {
@@ -83,6 +82,8 @@ export class UserService {
         throw new UnauthorizedException('wrong password');
       }
       console.log(user.id);
+      const userAgent = request.headers['user-agent'];
+      await this.mail.sendEmail(data.email,"Login With Your Email", `<h4>${userAgent}</h4>`)
       let token = this.jwt.sign({ id: user.id, role: user.role });
       console.log(token);
       return { token };
@@ -96,6 +97,7 @@ export class UserService {
       let user = await this.User.findById(id);
       return user;
     } catch (error) {
+      console.log(error)
       throw new BadRequestException(error);
     }
   }
